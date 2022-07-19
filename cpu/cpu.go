@@ -7,12 +7,11 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"unicode"
 )
 
 // Stats represents cpu statistics for linux
 type Stats struct {
-	User, Nice, System, Idle, Iowait, Irq, Softirq, Steal, Guest, GuestNice, Total uint64
+	User, Nice, System, Idle, Iowait, Irq, Softirq, Steal, Guest, GuestNice, Total, ProcsRunning, ProcsBlocked uint64
 	CPUCount, StatCount                                                            int
 }
 
@@ -34,6 +33,14 @@ func collect(out io.Reader) (*Stats, error) {
 	scanner := bufio.NewScanner(out)
 	var cpu Stats
 
+	//user: normal processes executing in user mode
+	//nice: niced processes executing in user mode
+	//system: processes executing in kernel mode
+	//idle: twiddling thumbs
+	//iowait: waiting for I/O to complete
+	//irq: servicing interrupts
+	//softirq: servicing softirqs
+
 	cpuStats := []cpuStat{
 		{"user", &cpu.User},
 		{"nice", &cpu.Nice},
@@ -45,6 +52,8 @@ func collect(out io.Reader) (*Stats, error) {
 		{"steal", &cpu.Steal},
 		{"guest", &cpu.Guest},
 		{"guest_nice", &cpu.GuestNice},
+		{"procs_running", &cpu.ProcsRunning},
+		{"procs_blocked", &cpu.ProcsBlocked},
 	}
 
 	if !scanner.Scan() {
@@ -67,8 +76,25 @@ func collect(out io.Reader) (*Stats, error) {
 	cpu.Total -= cpu.GuestNice
 	for scanner.Scan() {
 		line := scanner.Text()
-		if strings.HasPrefix(line, "cpu") && unicode.IsDigit(rune(line[3])) {
+		i := strings.IndexRune(line, ' ')
+		if i < 0 {
+			continue
+		}
+		k := line[:i]
+		v := line[i+1:]
+		if strings.HasPrefix(k, "cpu") {
 			cpu.CPUCount++
+		}
+		if k == "procs_running" {
+			if vi, err := strconv.ParseUint(v, 10, 64); err == nil {
+				cpu.ProcsRunning = vi
+			}
+		}
+
+		if k == "procs_blocked" {
+			if vi, err := strconv.ParseUint(v, 10, 64); err == nil {
+				cpu.ProcsBlocked = vi
+			}
 		}
 	}
 	if err := scanner.Err(); err != nil {

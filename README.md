@@ -14,7 +14,7 @@ package main
 import (
 	"fmt"
 	"os"
-    "github.com/sonnam0904/metric/cpu"
+        "github.com/sonnam0904/metric/cpu"
 	"github.com/sonnam0904/metric/memory"
 )
 
