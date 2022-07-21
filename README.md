@@ -6,9 +6,9 @@ go get github.com/sonnam0904/metric
 `
 
 
-#Use
-Example
-```
+
+## Example
+```go
 package metric
 
 import (
@@ -28,3 +28,5 @@ func main() {
 		}
 	}
 }
+
+```
