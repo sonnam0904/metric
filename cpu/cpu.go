@@ -61,8 +61,10 @@ func collect(out io.Reader) (*Stats, error) {
 	}
 
 	val := strings.Fields(scanner.Text())[1:]
+
 	cpu.StatCount = len(val)
 	for i, valStr := range val {
+
 		val, err := strconv.ParseUint(valStr, 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan %s ", cpuStats[i].name)
@@ -85,13 +87,13 @@ func collect(out io.Reader) (*Stats, error) {
 		if strings.HasPrefix(k, "cpu") {
 			cpu.CPUCount++
 		}
-		if k == "procs_running" {
+
+		switch k {
+			case "procs_running":
 			if vi, err := strconv.ParseUint(v, 10, 64); err == nil {
 				cpu.ProcsRunning = vi
 			}
-		}
-
-		if k == "procs_blocked" {
+			case "procs_blocked":
 			if vi, err := strconv.ParseUint(v, 10, 64); err == nil {
 				cpu.ProcsBlocked = vi
 			}

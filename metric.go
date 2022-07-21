@@ -4,11 +4,13 @@ import (
 	"time"
 	"github.com/sonnam0904/metric/cpu"
 	"github.com/sonnam0904/metric/memory"
+	"github.com/sonnam0904/metric/disk"
 )
 
 type Monitor struct {
 	OsMemory OsMemory
 	OsCPU OsCPU
+	OsDisk []disk.Stats
 }
 
 type OsMemory struct {
@@ -30,12 +32,10 @@ type OsCPU struct {
 
 func NewMonitor(duration int, info chan Monitor) {
 	var m Monitor
-	var interval = time.Duration(duration) * time.Second
-	memory, err := memory.Get()
-	cpu, err := cpu.Get()
 	for {
-		<-time.After(interval)
+		time.Sleep(time.Duration(duration) * time.Second)
 		// memory
+		memory, err := memory.Get()
 		if err != nil {
 			m.OsMemory.Total = uint64(0)
 			m.OsMemory.Used = uint64(0)
@@ -51,6 +51,7 @@ func NewMonitor(duration int, info chan Monitor) {
 		}
 
 		// CPU
+		cpu, err := cpu.Get()
 		if err != nil {
 			m.OsCPU.Used = float64(0)
 			m.OsCPU.System = float64(0)
@@ -64,9 +65,11 @@ func NewMonitor(duration int, info chan Monitor) {
 			m.OsCPU.ProcsBlocked = float64(cpu.ProcsBlocked)
 			m.OsCPU.CPUCount = int(cpu.CPUCount)
 		}
+
+		// diskstat
+		ds,_ := disk.Get()
+		m.OsDisk = ds
 		info<-m
-		//b, _ := json.Marshal(m)
-		//fmt.Println(string(b))
 	}
 }
 
